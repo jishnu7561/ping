@@ -1,0 +1,8 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+
+application.properties
+ping-ServiceAccountKey.json
+postservice/src/main/resources/ping-ServiceAccountKey.json
+auth-service/src/main/resources/ping-ServiceAccountKey.json

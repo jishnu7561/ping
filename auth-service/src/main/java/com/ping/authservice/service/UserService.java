@@ -98,6 +98,9 @@ public class UserService implements UserDetailsService {
         profileResponse.setImage(user.getImageUrl());
         profileResponse.setFollowers(followRepository.findByFollowingId(userId));
         profileResponse.setFollowing(followRepository.findByFollowerId(userId));
+        profileResponse.setPrivate(user.isPrivate());
+        profileResponse.setSubscribed(user.isSubscribed());
+        profileResponse.setSubscriptionEndDate(user.getSubscriptionEndDate());
         return profileResponse;
     }
 
@@ -177,5 +180,23 @@ public class UserService implements UserDetailsService {
             return user;
         }
        return user;
+    }
+
+    public BasicResponse handlePrivacy(String header) {
+        try {
+            User user = findUserByHeader(header);
+            user.setPrivate(!user.isPrivate());
+            userRepository.save(user);
+            return BasicResponse.builder()
+                    .status(HttpStatus.OK.value())
+                    .message("success")
+                    .description("privacy changed successfully")
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        } catch (UsernameNotFoundException e) {
+            throw new UsernameNotFoundException(e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
     }
 }

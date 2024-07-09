@@ -23,9 +23,11 @@ public class PostResponse {
     private String bio;
     private boolean isBlocked;
     private String profileImage;
+    private boolean isSubscribed;
 
     private Integer postId;
     private String caption;
+    private String tag;
     private String createdAt;
     private List<String> image;
     private boolean isLiked;

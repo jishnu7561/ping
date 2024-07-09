@@ -28,8 +28,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -318,5 +317,25 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+    }
+
+    public void isSubscriptionValid(User user) {
+        LocalDateTime endDate = user.getSubscriptionEndDate();
+        LocalDateTime currentDate = LocalDateTime.now(); // Get current date and time
+
+        if (currentDate.isAfter(endDate)) {
+            user.setSubscribed(false);
+            userRepository.save(user);
+        }
+    }
+
+    public List<User> getAllUsersById(List<Integer> userIds) {
+        List<User> userList = new ArrayList<>();
+        for (Integer id: userIds) {
+            Optional<User> user = userRepository.findById(id);
+            user.ifPresent(userList::add);
+        }
+//      return  userRepository.findByIdIn(userIds);
+        return userList;
     }
 }

@@ -22,6 +22,8 @@ public class User {
     private String bio;
     private boolean isBlocked;
     private String imageUrl;
+    private boolean isPrivate;
+    private boolean isSubscribed;
 
     private String role;
 }

@@ -14,9 +14,12 @@ public class RouteValidator {
             "/user/api/auth/register",
             "/user/api/auth/authenticate",
             "/user/api/auth/otpVerification",
+            "/user/api/auth/webhook",
             "/user/api/auth/resend-otp",
             "/user/api/auth/status/**",
             "/user/api/auth/google",
+            "/user/api/auth/**",
+            "user/api/auth/getAllUsers",
             "/eureka/**"
     );
 

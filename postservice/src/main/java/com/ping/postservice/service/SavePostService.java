@@ -10,6 +10,7 @@ import com.ping.postservice.model.Post;
 import com.ping.postservice.model.SavedPost;
 import com.ping.postservice.repository.PostRepository;
 import com.ping.postservice.repository.SavePostRepository;
+import com.ping.postservice.util.TimeAgoUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,9 @@ public class SavePostService {
 
     @Autowired
     private LikeService likeService;
+
+    @Autowired
+    private TimeAgoUtil timeAgoUtil;
 
 
 //    @Autowired
@@ -124,12 +128,19 @@ public class SavePostService {
         if(!savedPosts.isEmpty()) {
             for(SavedPost savedPost : savedPosts) {
              postResponses.add(PostResponse.builder()
-                        .postId(savedPost.getPost().getId())
-                        .image(getPostImages(savedPost.getPost()))
-                        .isLiked(likeService.isPostLikedByUser(user.getId(), savedPost.getPost().getId()))
-                        .likeCount(likeService.countLikes(savedPost.getPost().getId()))
-                        .isSaved(likeService.isPostSavedByUser(user.getId(),savedPost.getPost().getId()))
-                        .build());
+                             .postId(savedPost.getPost().getId())
+                             .userId(savedPost.getPost().getUserId())
+//                             .profileImage(user.getImageUrl())
+//                             .accountName(user.getAccountName())
+//                             .fullName(user.getFullName())
+                             .image(getPostImages(savedPost.getPost()))
+                             .caption(savedPost.getPost().getCaption())
+                             .tag(savedPost.getPost().getTag())
+                             .createdAt(timeAgoUtil.calculateTimeAgo(savedPost.getPost().getCreatedAt()))
+                             .isLiked(likeService.isPostLikedByUser(user.getId(), savedPost.getPost().getId()))
+                             .likeCount(likeService.countLikes(savedPost.getPost().getId()))
+                             .isSaved(likeService.isPostSavedByUser(user.getId(),savedPost.getPost().getId()))
+                             .build());
             }
         }
         return postResponses;

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/post")
@@ -100,5 +101,23 @@ public class PostController {
         System.out.println("called the delete method for deleting post");
         postRepository.deleteById(postId);
         return ResponseEntity.ok("success");
+    }
+
+    @GetMapping("/getPostDetails/{postId}")
+    public ResponseEntity<PostResponse> getPostDetails(@PathVariable Integer postId,@RequestHeader("Authorization") String header){
+
+       return ResponseEntity.ok(postService.getPostDetails(postId,header));
+    }
+
+    @GetMapping("/getPostDetailsOfSaved/{postId}")
+    public ResponseEntity<PostResponse> getPostDetailsOfSaved(@PathVariable Integer postId) {
+        return ResponseEntity.ok(postService.getPostDetailsOfSaved(postId));
+    }
+
+    @PostMapping("/editPost/{postId}")
+    public ResponseEntity<BasicResponse> editPost(@PathVariable Integer postId,
+                                                  @RequestHeader("Authorization") String header,
+                                                  @RequestBody Map<String, String> requestBody){
+        return ResponseEntity.ok(postService.editPost(postId,header,requestBody));
     }
 }

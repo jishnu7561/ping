@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -69,6 +70,15 @@ public class AuthController {
         return ResponseEntity.ok(user.isBlocked() ? "BLOCKED" : "ACTIVE");
     }
 
+    @GetMapping("/isSubscribed/{userName}")
+    public void isSubscribed(@PathVariable String userName) {
+        System.out.println("email=======  " +userName);
+        System.out.println("callingg+++++++++++++++++++++++");
+        User user = userRepository.findByEmail(userName).orElseThrow(()->new UsernameNotFoundException("user not found"));
+        authService.isSubscriptionValid(user);
+//        return ResponseEntity.ok(user.isBlocked() ? "BLOCKED" : "ACTIVE");
+    }
+
     @GetMapping("/isUserExist/{id}")
     public ResponseEntity<User> getUserIfExist(@PathVariable Integer id) {
         Optional<User> user = userRepository.findById(id);
@@ -101,6 +111,17 @@ public class AuthController {
         System.out.println(payload);
 
         return ResponseEntity.ok(authService.saveUserByGoogleDetails(payload));
+    }
+
+    @PostMapping("/getAllUsers")
+    public ResponseEntity<List<User>> getAllUsersById(@RequestBody List<Integer> userIds) {
+        System.out.println("called the getUser endpoint");
+        return ResponseEntity.ok(authService.getAllUsersById(userIds));
+    }
+
+    @GetMapping("/findByUsername/{userName}")
+    public ResponseEntity<List<User>> getUserByUserName(@PathVariable String userName){
+        return ResponseEntity.ok(userRepository.findByAccountNameContainingIgnoreCase(userName));
     }
 
 

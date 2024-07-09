@@ -26,6 +26,8 @@ public class Post {
 
     private String caption;
 
+    private String tag;
+
     @Column(name = "images")
     @OneToMany(mappedBy = "post" , cascade = CascadeType.ALL , orphanRemoval = true)
     private List<Image> images;

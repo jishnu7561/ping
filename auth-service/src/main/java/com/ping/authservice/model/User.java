@@ -9,6 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -30,12 +31,19 @@ public class User implements UserDetails {
     private String bio;
     private boolean isBlocked = false;
     private String imageUrl;
+    private boolean isPrivate = false;
 
 //    @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL)
 //    private List<Follow> followers;
 //
 //    @OneToMany(mappedBy = "following", cascade = CascadeType.ALL)
 //    private List<Follow> following;
+
+    private boolean isSubscribed = false;
+
+    private Integer subscriptionId;
+
+    private LocalDateTime subscriptionEndDate;
 
     @Enumerated(EnumType.STRING)
     private Role role;

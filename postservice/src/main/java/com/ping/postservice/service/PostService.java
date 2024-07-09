@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class PostService {
@@ -48,6 +49,7 @@ public class PostService {
             Post post = Post.builder()
                     .userId(user.getId())
                     .caption(caption)
+                    .tag(tag)
                     .createdAt(LocalDateTime.now())
                     .build();
 
@@ -100,10 +102,12 @@ public class PostService {
                                 .fullName(user.getFullName())
                                 .image(getPostImages(post))
                                 .caption(post.getCaption())
+                                .tag(post.getTag())
                                 .createdAt(timeAgoUtil.calculateTimeAgo(post.getCreatedAt()))
                                 .isLiked(likeService.isPostLikedByUser(userId,post.getId()))
                                 .isSaved(savePostService.isPostSavedByUser(userId,post.getId()))
                                 .likeCount(likeService.countLikes(post.getId()))
+                                .isSubscribed(user.isSubscribed())
                                 .build()
                 );
             }
@@ -146,6 +150,7 @@ public class PostService {
                                 .fullName(user.getFullName())
                                 .image(getPostImages(post))
                                 .caption(post.getCaption())
+                                .tag(post.getTag())
                                 .createdAt(timeAgoUtil.calculateTimeAgo(post.getCreatedAt()))
                                 .isLiked(likeService.isPostLikedByUser(user.getId(), post.getId()))
                                 .likeCount(likeService.countLikes(post.getId()))
@@ -164,5 +169,86 @@ public class PostService {
             images.add(image.getImageUrl());
         }
         return images;
+    }
+
+    public PostResponse getPostDetails(Integer postId,String header) {
+        try {
+            Post post = postRepository.findById(postId).orElseThrow(() -> new UserNotFoundException("post not found"));
+            User user = userClient.getUser(header).getBody();
+            if(user == null) {
+                throw new UserNotFoundException("user not found");
+            }
+            return PostResponse.builder()
+                    .postId(post.getId())
+                    .userId(user.getId())
+                    .profileImage(user.getImageUrl())
+                    .accountName(user.getAccountName())
+                    .fullName(user.getFullName())
+                    .image(getPostImages(post))
+                    .caption(post.getCaption())
+                    .tag(post.getTag())
+                    .createdAt(timeAgoUtil.calculateTimeAgo(post.getCreatedAt()))
+                    .isLiked(likeService.isPostLikedByUser(user.getId(), post.getId()))
+                    .likeCount(likeService.countLikes(post.getId()))
+                    .isSaved(savePostService.isPostSavedByUser(user.getId(), post.getId()))
+                    .build();
+
+        } catch (UserNotFoundException e) {
+            throw new UserNotFoundException(e.getMessage());
+        }
+        catch (Exception e){
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public BasicResponse editPost(Integer postId, String header, Map<String,String > requestBody) {
+        try {
+            Post post = postRepository.findById(postId).orElseThrow(() -> new UserNotFoundException("post not found"));
+            User user = userClient.getUser(header).getBody();
+            post.setCaption(requestBody.get("caption"));
+            post.setTag(requestBody.get("tag"));
+            postRepository.save(post);
+            return BasicResponse.builder()
+                    .status(HttpStatus.OK.value())
+                    .message("successfully edited")
+                    .description("post update has been successfully completed")
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        } catch (UserNotFoundException e) {
+            throw new UserNotFoundException(e.getMessage());
+        } catch (Exception e){
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+
+    public PostResponse getPostDetailsOfSaved(Integer postId) {
+        try {
+            Post post = postRepository.findById(postId).orElseThrow(() -> new UserNotFoundException("post not found"));
+            User user = userClient.getUserIfExist(post.getUserId()).getBody();
+            if(user == null) {
+                throw new UserNotFoundException("user not found");
+            }
+            return PostResponse.builder()
+                    .postId(post.getId())
+                    .userId(user.getId())
+                    .profileImage(user.getImageUrl())
+                    .accountName(user.getAccountName())
+                    .fullName(user.getFullName())
+                    .image(getPostImages(post))
+                    .caption(post.getCaption())
+                    .tag(post.getTag())
+                    .createdAt(timeAgoUtil.calculateTimeAgo(post.getCreatedAt()))
+                    .isLiked(likeService.isPostLikedByUser(user.getId(), post.getId()))
+                    .likeCount(likeService.countLikes(post.getId()))
+                    .isSaved(savePostService.isPostSavedByUser(user.getId(), post.getId()))
+                    .build();
+
+        } catch (UserNotFoundException e) {
+            throw new UserNotFoundException(e.getMessage());
+        }
+        catch (Exception e){
+            throw new RuntimeException(e.getMessage());
+        }
     }
 }

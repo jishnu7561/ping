@@ -4,6 +4,7 @@ import com.ping.authservice.dto.ProfileResponse;
 import com.ping.authservice.model.User;
 import com.ping.authservice.repository.FollowRepository;
 import com.ping.authservice.service.FollowService;
+import com.ping.authservice.service.FriendRequestService;
 import com.ping.authservice.service.UserService;
 import com.ping.authservice.service.firebase.ImageService;
 import com.ping.authservice.util.BasicResponse;
@@ -30,6 +31,9 @@ public class ProfileController {
 
     @Autowired
     private FollowService followService;
+
+    @Autowired
+    private FriendRequestService friendRequestService;
 
     @GetMapping("/profile/{id}")
     public ResponseEntity<ProfileResponse> userProfile(@PathVariable("id") int userId) {
@@ -83,6 +87,18 @@ public class ProfileController {
         System.out.println("calling isfollowing");
         Integer followingId = requestBody.get("followingId");
         return ResponseEntity.ok(followRepository.findByFollowerIdAndFollowingId(userId,followingId).isPresent());
+    }
+
+    @PostMapping("/handlePrivacy")
+    public ResponseEntity<BasicResponse> handlePrivacy(@RequestHeader("Authorization") String header) {
+        return ResponseEntity.ok(userService.handlePrivacy(header));
+    }
+
+    @PostMapping("/sendFollowRequest")
+    public ResponseEntity<BasicResponse> sendFollowRequest(@RequestBody Map<String, Integer> requestBody){
+        Integer followingId = requestBody.get("followingId");
+        Integer followerId = requestBody.get("followerId");
+        return ResponseEntity.ok(friendRequestService.sendFollowRequest(followerId,followingId));
     }
 
 

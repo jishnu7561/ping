@@ -12,9 +12,9 @@ import java.util.Collections;
 @Component
 public class GoogleTokenVerifier {
 
-//    private static final String CLIENT_ID = "";
-    @Value("${google.client.id}")
-    private static String CLIENT_ID;
+    private static final String CLIENT_ID = "184243567332-nlp89m0i8r379ho082v8gk9kvkaq3prl.apps.googleusercontent.com";
+//    @Value("${google.client.id}")
+//    private String CLIENT_ID;
 
     public GoogleIdToken.Payload validateToken(String idToken) {
         GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())

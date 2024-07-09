@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "comments")
@@ -29,7 +30,13 @@ public class Comment {
 
     private String comment;
 
+    @Column(name = "parent_id")
+    private Integer parentId;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "parentId", cascade = CascadeType.ALL)
+    private List<Comment> replies;
 
 }

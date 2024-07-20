@@ -7,6 +7,9 @@ import com.ping.chat_service.model.Message;
 import com.ping.chat_service.repository.ChatRepository;
 import com.ping.chat_service.repository.MessageRepository;
 import com.ping.chat_service.service.ChatService;
+import com.ping.chat_service.service.NotificationService;
+import com.ping.chat_service.util.BasicResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +24,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/chat")
+@RequiredArgsConstructor
 public class ChatController {
 
     @Autowired
@@ -34,6 +38,9 @@ public class ChatController {
 
     private SimpMessagingTemplate simpMessagingTemplate;
 
+    @Autowired
+    private NotificationService notificationService;
+
     @PostMapping("/createChat/{receiverId}")
     public ResponseEntity<Chat> createChat(@PathVariable Integer receiverId,
                                            @RequestHeader("Authorization") String header){
@@ -46,15 +53,31 @@ public class ChatController {
 //        return new ResponseEntity<Message>(chatService.sendMessage(header,messageRequest), HttpStatus.CREATED);
 //    }
 
-    @MessageMapping("/sendMessage")
-    @SendTo("/topic/messages")
-    public MessageResponse sendMessage(@Payload MessageRequest messageRequest) {
-        // Handle the message and save it to the database if needed
-        // Return the message response
-        System.out.println("sendMessage endpoint get called");
-        Message message = chatService.sendMessage(messageRequest);
-        simpMessagingTemplate.convertAndSend("/group/"+message.getChat().getId().toString(),message);
-        return new MessageResponse(message.getId(), message.getSender(), message.getReceiver(), message.getContent(), message.getCreatedAt(),message.getIsRead());
+    private final SimpMessagingTemplate messagingTemplate;
+
+
+    @MessageMapping("/send")
+    @SendTo("/topic/messages/{chatId}") // Broadcast to subscribed clients for the chat
+    public ResponseEntity<String> sendMessage(@Payload MessageRequest messageRequest,
+                                                       @RequestHeader("Authorization") String header) {
+        System.out.println("message endpoint called");
+//        try {
+//            Message message = chatService.sendMessage(header, messageRequest);
+//            messagingTemplate.convertAndSendToUser(
+//                    messageRequest.getChatId().toString(),
+//                    "/topic/messages/" + message.getChat().getId(),
+//                    message);
+//            return ResponseEntity.ok(MessageResponse.builder()
+//                            .content(message.getContent())
+//                            .id(message.getChat().getId())
+//                    .build()); // Convert to MessageResponse
+//        } catch (Exception e) {
+//            // Handle exceptions (e.g., validation errors, authorization failures)
+//            // Log the error and return an appropriate error response
+//            System.err.println("Error sending message: " + e.getMessage());
+//            throw new RuntimeException(e.getMessage());
+        return ResponseEntity.ok("message");
+//        }
     }
 
     @GetMapping("/getAllChat/{receiverId}")
@@ -68,11 +91,11 @@ public class ChatController {
         return new ResponseEntity<List<ChattingUserResponse>>(chatService.getDefaultChattingUsers(header),HttpStatus.OK);
     }
 
-    @GetMapping("/search/{query}")
-    public List<ChattingUserResponse> searchUsers(@PathVariable String query,
+    @GetMapping("/search/{search}")
+    public List<ChattingUserResponse> searchUsers(@PathVariable String search,
                                                   @RequestHeader("Authorization") String header) {
-        System.out.println("searchquery: "+query);
-        return chatService.searchUsers(query,header);
+        System.out.println("searchquery  is  : "+search);
+        return chatService.searchUsers(search,header);
     }
 
     @GetMapping("/getMessages/{chatId}")
@@ -90,6 +113,40 @@ public class ChatController {
     public ResponseEntity<User> getDetails(@PathVariable Integer chatId,
                                                      @RequestHeader("Authorization") String header){
         return ResponseEntity.ok(chatService.getUserDetailsByChatId(chatId,header));
+    }
+
+//    @PutMapping("/isRead/{chatId}")
+//    public ResponseEntity<BasicResponse> markMessagesAsRead(@RequestHeader("Authorization") String header,
+//                                                            @PathVariable Integer chatId) {
+//        System.out.println("called the markMessagesAsRead() method by chatId= "+chatId);
+//        return ResponseEntity.ok(chatService.markMessagesAsRead(header, chatId));
+//    }
+
+//    @GetMapping("/unreadCount/{chatId}")
+//    public ResponseEntity<Integer> getUnreadMessagesCount(@PathVariable Integer chatId,
+//                                                          @RequestHeader("Authorization") String header) {
+//        Integer unreadCount = chatService.getUnreadMessagesCount(header, chatId);
+//        return ResponseEntity.ok(unreadCount);
+//    }
+
+    @DeleteMapping("/delete-message/{messageId}")
+    public ResponseEntity<BasicResponse> deleteMessage(@PathVariable Integer messageId){
+        return ResponseEntity.ok(chatService.deleteMessage(messageId));
+    }
+
+    @GetMapping("/notifications/{userId}")
+    public ResponseEntity<List<NotificationResponse>> getAllNotifications(@PathVariable Integer userId) {
+        return ResponseEntity.ok(notificationService.getAllNotifications(userId));
+    }
+
+    @DeleteMapping("/delete-notification/{notificationId}")
+    public ResponseEntity<BasicResponse> deleteNotification(@PathVariable Integer notificationId){
+        return ResponseEntity.ok(notificationService.deleteNotification(notificationId));
+    }
+
+    @GetMapping("/notificationCount/{id}")
+    public Integer notificationCount(@PathVariable Integer id){
+        return notificationService.getNotificationCount(id);
     }
 
 }

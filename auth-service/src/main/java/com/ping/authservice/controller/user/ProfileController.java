@@ -9,6 +9,8 @@ import com.ping.authservice.service.UserService;
 import com.ping.authservice.service.firebase.ImageService;
 import com.ping.authservice.util.BasicResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -49,6 +52,7 @@ public class ProfileController {
     @PostMapping("/uploadImage")
     public ResponseEntity<BasicResponse> uploadImage(@RequestParam("file") MultipartFile file, @RequestParam("id") Integer id) {
         String imageUrl = imageService.upload(file);
+        System.out.println("called the       upload image  ");
         userService.saveImageUrl(imageUrl,id);
         return ResponseEntity.ok(BasicResponse.builder()
                 .status( HttpStatus.OK.value())
@@ -101,5 +105,11 @@ public class ProfileController {
         return ResponseEntity.ok(friendRequestService.sendFollowRequest(followerId,followingId));
     }
 
+    @GetMapping("/getAllUsersOnSearch")
+    public List<User> getAllUsers(
+            @RequestParam(defaultValue = "") String search
+    ) {
+        return userService.getAllUsersBasedOnSearch(search);
+    }
 
 }

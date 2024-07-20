@@ -1,8 +1,24 @@
-# Server properties
+#"# Server properties
+#server:
+#  port: 8085
+#
+## Application properties
+#spring:
+#  application:
+#    name: chat-service
+#
+#  # Datasource properties
+#  datasource:
+#    url: jdbc:mysql://localhost:3306/chat_service
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    username: root
+#    password: "@springboot123"
+
+
 server:
   port: 8085
 
-# Application properties
+  # Application properties
 spring:
   application:
     name: chat-service
@@ -21,6 +37,12 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
     hibernate:
       ddl-auto: update
+
+#  kafka:
+#    consumer:
+#      bootstrap-servers: localhost:9092
+#      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
 
 # Eureka client configuration
 eureka:

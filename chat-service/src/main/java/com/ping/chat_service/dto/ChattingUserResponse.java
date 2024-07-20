@@ -25,4 +25,6 @@ public class ChattingUserResponse {
     private Integer user2Id;
     private String lastMessage;
     private String lastMessageDate;
+    private boolean isRead;
+    private Integer unreadMessage;
 }

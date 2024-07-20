@@ -41,6 +41,9 @@ public class Post {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY , orphanRemoval = true)
     private List<SavedPost> savedPosts;
 
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY , orphanRemoval = true)
+    private List<ReportPost> reportPost;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

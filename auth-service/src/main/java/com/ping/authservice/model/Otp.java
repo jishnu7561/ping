@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Entity
 @Builder
-public class Otp {
+public class  Otp {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

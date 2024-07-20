@@ -3,6 +3,7 @@ package com.ping.authservice.service;
 import com.ping.authservice.GlobalExceptionHandler.Exceptions.UsernameNotFoundException;
 import com.ping.authservice.dto.ProfileResponse;
 
+import com.ping.authservice.model.Otp;
 import com.ping.authservice.model.User;
 import com.ping.authservice.repository.FollowRepository;
 import com.ping.authservice.repository.UserRepository;
@@ -10,6 +11,7 @@ import com.ping.authservice.util.BasicResponse;
 import com.ping.authservice.util.EmailUtil;
 import com.ping.authservice.util.OtpUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.MailException;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -198,5 +201,12 @@ public class UserService implements UserDetailsService {
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
+    }
+
+    public List<User> getAllUsersBasedOnSearch(String search) {
+        if(Objects.equals(search, "")) {
+            return userRepository.findAll();
+        }
+        return userRepository.findByAccountNameContainingIgnoreCase(search);
     }
 }

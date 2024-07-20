@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -100,6 +101,8 @@ public class ChatService {
         }
     }
 
+
+    @Transactional
     public Message sendMessage(MessageRequest messageRequest) {
         try {
 //            User user = userClient.getUser(header).getBody();
@@ -117,13 +120,14 @@ public class ChatService {
                     .isRead(false)
                     .chat(chat)
                     .build();
-            messageRepository.save(message);
+            Message savedMessage = messageRepository.save(message);
 
             chat.setLastMessage(messageRequest.getContent());
             chat.setLastMessageDate(LocalDateTime.now());
             chatRepository.save(chat);
 
-            return message;
+            System.out.println("saved message: "+savedMessage.getId());
+            return savedMessage;
 
         } catch (UserNotFoundException ex) {
             throw new UserNotFoundException(ex.getMessage());
@@ -158,15 +162,12 @@ public class ChatService {
             if(user == null) {
                 throw new UserNotFoundException("user not found");
             }
-        List<Chat> chats = chatRepository.findByUser1IdOrUser2Id(user.getId(), user.getId());
-         List<Integer> userIdList = chats.stream()
+            List<Chat> chats = chatRepository.findByUser1IdOrUser2Id(user.getId(), user.getId());
+            List<Integer> userIdList = chats.stream()
                 .map(chat -> chat.getUser1Id().equals(user.getId()) ? chat.getUser2Id() : chat.getUser1Id())
                 .distinct()
                 .toList();
-//
-////         List<Integer> newList = Arrays.asList(1, 2, 3, 4);
-//
-//         List<User> usersList = userClient.getAllUsersById(userIdList).getBody();
+
 
             List<ChattingUserResponse> responseList = new ArrayList<>();
 
@@ -179,6 +180,7 @@ public class ChatService {
                         .accountName(user1.getAccountName())
                         .imageUrl(user1.getImageUrl())
                         .userId(user1.getId())
+                        .unreadMessage(getUnreadMessagesCount(user.getId(),chat.getId()))
                         .build();
                 responseList.add(details);
             }
@@ -208,25 +210,30 @@ public class ChatService {
                 throw new UserNotFoundException("user not found");
             }
             List<ChattingUserResponse> response = new ArrayList<>();
-            List<User> userList = userClient.getUserByUserName(query).getBody();
-            for(User user2 : userList ) {
-                ChattingUserResponse chattingUserResponse = new ChattingUserResponse();
-                System.out.println(user2.getAccountName());
-                chattingUserResponse.setUserId(user2.getId());
-                chattingUserResponse.setAccountName(user2.getAccountName());
-                chattingUserResponse.setImageUrl(user2.getImageUrl());
-                Optional<Chat> chat = chatRepository.findByUser1IdAndUser2Id(user1.getId(), user2.getId());
-                if (chat.isEmpty()) {
-                    chat = chatRepository.findByUser1IdAndUser2Id(user2.getId(), user1.getId());
+//            if(Objects.equals(query, "")) {
+                List<User> userList = userClient.getUserByUserName(query).getBody();
+                for (User user2 : userList) {
+                    ChattingUserResponse chattingUserResponse = new ChattingUserResponse();
+                    System.out.println(user2.getAccountName());
+                    chattingUserResponse.setUserId(user2.getId());
+                    chattingUserResponse.setAccountName(user2.getAccountName());
+                    chattingUserResponse.setImageUrl(user2.getImageUrl());
+                    Optional<Chat> chat = chatRepository.findByUser1IdAndUser2Id(user1.getId(), user2.getId());
+                    if (chat.isEmpty()) {
+                        chat = chatRepository.findByUser1IdAndUser2Id(user2.getId(), user1.getId());
+                    }
+                    if (chat.isPresent()) {
+                        chattingUserResponse.setChatId(chat.get().getId());
+                        chattingUserResponse.setLastMessage(chat.get().getLastMessage());
+                        chattingUserResponse.setLastMessageDate(formatLastMessageDate(chat.get().getLastMessageDate()));
+                        chattingUserResponse.setUnreadMessage(getUnreadMessagesCount(user1.getId(),chat.get().getId()));
+                    }
+                    response.add(chattingUserResponse);
                 }
-                if(chat.isPresent()){
-                    chattingUserResponse.setChatId(chat.get().getId());
-                    chattingUserResponse.setLastMessage(chat.get().getLastMessage());
-                    chattingUserResponse.setLastMessageDate(formatLastMessageDate(chat.get().getLastMessageDate()));
-                }
-                response.add(chattingUserResponse);
-            }
-            return response;
+                return response;
+//            }
+//            return getDefaultChattingUsers(header);
+
         } catch (UserNotFoundException ex) {
             throw new UserNotFoundException(ex.getMessage());
         } catch (Exception ex) {
@@ -309,4 +316,54 @@ public class ChatService {
     public Message saveMessage(Message message) {
         return messageRepository.save(message);
     }
+
+    public Integer getUnreadMessagesCount(Integer userId, Integer chatId) {
+        try{
+//            User user = userClient.getUser(header).getBody();
+            return messageRepository.countUnreadMessages(userId,chatId);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    @Transactional
+    public BasicResponse markMessagesAsRead(String header, Integer chatId) {
+        try{
+            User user = userClient.getUser(header).getBody();
+            messageRepository.markMessagesAsRead(user.getId(),chatId);
+            return BasicResponse.builder()
+                    .status(HttpStatus.OK.value())
+                    .message("successful")
+                    .description("Messages get marked as read successfully")
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        } catch (UserNotFoundException e) {
+            throw new UserNotFoundException(e.getMessage());
+        } catch (Exception e){
+            throw new  RuntimeException(e.getMessage());
+        }
+    }
+
+    public BasicResponse deleteMessage(Integer messageId) {
+        try {
+            messageRepository.deleteById(messageId);
+            return BasicResponse.builder()
+                    .status(HttpStatus.OK.value())
+                    .message("successful")
+                    .description("message deleted successfully")
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+//    @Transactional
+//    public void markMessagesAsRead(Integer receiverId, Integer chatId) {
+//        messageRepository.markMessagesAsRead(receiverId, chatId);
+//    }
+
+//    public Integer getUnreadMessagesCount(Integer receiverId, Integer chatId) {
+//        return messageRepository.countUnreadMessages(receiverId, chatId);
+//    }
 }

@@ -120,4 +120,17 @@ public class PostController {
                                                   @RequestBody Map<String, String> requestBody){
         return ResponseEntity.ok(postService.editPost(postId,header,requestBody));
     }
+
+    @GetMapping("/getPostCount")
+    public ResponseEntity<Long> postCount(){
+        return ResponseEntity.ok(postRepository.count());
+    }
+
+    @PostMapping("/delete-post")
+    public ResponseEntity<BasicResponse> deletePost(@RequestParam Integer postId,
+                                                    @RequestParam String reason,
+                                                    @RequestParam Integer reportId) {
+        System.out.println("reportId: "+ reportId +"  "+"postId: "+ postId +"  ");
+        return ResponseEntity.ok(postService.deletePost(postId,reason,reportId));
+    }
 }

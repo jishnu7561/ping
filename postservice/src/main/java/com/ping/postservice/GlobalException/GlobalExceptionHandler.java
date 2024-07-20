@@ -1,5 +1,6 @@
 package com.ping.postservice.GlobalException;
 
+import com.ping.postservice.GlobalException.Exceptions.ResourceNotFoundException;
 import com.ping.postservice.GlobalException.Exceptions.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -16,6 +17,15 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST.value())
                 .message(ex.getMessage())
                 .description("enable to find user")
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+    @ExceptionHandler(value = {ResourceNotFoundException.class})
+    public ErrorMessage resourceNotFoundException (ResourceNotFoundException ex) {
+        return ErrorMessage.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message(ex.getMessage())
+                .description("enable to find resource")
                 .timestamp(LocalDateTime.now())
                 .build();
     }

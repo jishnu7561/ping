@@ -124,7 +124,6 @@ public class AuthController {
         return ResponseEntity.ok(userRepository.findByAccountNameContainingIgnoreCase(userName));
     }
 
-
 }
 
 class GoogleAuthRequest {

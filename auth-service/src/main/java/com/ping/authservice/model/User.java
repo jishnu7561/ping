@@ -33,6 +33,9 @@ public class User implements UserDetails {
     private String imageUrl;
     private boolean isPrivate = false;
 
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
 //    @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL)
 //    private List<Follow> followers;
 //

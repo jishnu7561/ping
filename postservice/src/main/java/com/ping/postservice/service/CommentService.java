@@ -1,11 +1,14 @@
 package com.ping.postservice.service;
 
+import com.ping.common.dto.Notification;
+import com.ping.common.dto.TypeOfNotification;
 import com.ping.postservice.GlobalException.Exceptions.UserNotFoundException;
 import com.ping.postservice.dto.BasicResponse;
 import com.ping.postservice.dto.CommentRequest;
 import com.ping.postservice.dto.CommentResponse;
 import com.ping.postservice.dto.User;
 import com.ping.postservice.feign.UserClient;
+import com.ping.postservice.kafka.KafkaMessagePublisher;
 import com.ping.postservice.model.Comment;
 import com.ping.postservice.model.Post;
 import com.ping.postservice.repository.CommentRepository;
@@ -36,6 +39,9 @@ public class CommentService {
     @Autowired
     private TimeAgoUtil timeAgoUtil;
 
+    @Autowired
+    private KafkaMessagePublisher kafkaMessagePublisher;
+
     public CommentResponse addComments(CommentRequest request, String header) {
         System.out.println("comments: " +request);
         try {
@@ -48,12 +54,22 @@ public class CommentService {
                         .userId(user.getId())
                         .createdAt(LocalDateTime.now())
                         .build();
-                commentRepository.save(comment1);
+                Comment comment = commentRepository.save(comment1);
+
+                kafkaMessagePublisher.sendNotification("notification", Notification.builder()
+                                .sender(user.getId())
+                                .receiver(postOptional.get().getUserId())
+                                .typeOfNotification(TypeOfNotification.COMMENT)
+                                .createdAt(LocalDateTime.now())
+                                .postId(postOptional.get().getId())
+                                .commentId(comment.getId())
+                                .build());
+
                 return CommentResponse.builder()
                         .status(HttpStatus.OK.value())
                         .message("success")
                         .description("successfully added the comment")
-                        .commentRequest(getNewComment(comment1,user))
+                        .commentRequest(getCommentsByPostId(postOptional.get().getId()))
                         .timestamp(LocalDateTime.now())
                         .build();
             }
@@ -99,17 +115,35 @@ public class CommentService {
         return comments.stream().map(this::mapToCommentRequest).collect(Collectors.toList());
     }
 
-    private CommentRequest mapToCommentRequest(Comment comment) {
-        return CommentRequest.builder()
-                .commentId(comment.getId())
-                .comment(comment.getComment())
-                .postId(comment.getPost().getId())
-                .parentId(comment.getParentId())
-                .created(timeAgoUtil.calculateTimeAgo(comment.getCreatedAt()))
-                .user(userClient.getUserIfExist(comment.getUserId()).getBody()) // Assuming a method to get user details
-                .replies(comment.getReplies().stream().map(this::mapToCommentRequest).collect(Collectors.toList())) // Recursive mapping
-                .build();
+//    private CommentRequest mapToCommentRequest(Comment comment) {
+//        return CommentRequest.builder()
+//                .commentId(comment.getId())
+//                .comment(comment.getComment())
+//                .postId(comment.getPost().getId())
+//                .parentId(comment.getParentId())
+//                .created(timeAgoUtil.calculateTimeAgo(comment.getCreatedAt()))
+//                .user(userClient.getUserIfExist(comment.getUserId()).getBody()) // Assuming a method to get user details
+//                .replies(comment.getReplies().stream().map(this::mapToCommentRequest).collect(Collectors.toList())) // Recursive mapping
+//                .build();
+//    }
+private CommentRequest mapToCommentRequest(Comment comment) {
+    List<CommentRequest> replies = new ArrayList<>();
+    if (comment.getReplies() != null) {
+        replies = comment.getReplies().stream()
+                .map(this::mapToCommentRequest)
+                .collect(Collectors.toList());
     }
+
+    return CommentRequest.builder()
+            .commentId(comment.getId())
+            .comment(comment.getComment())
+            .postId(comment.getPost().getId())
+            .parentId(comment.getParentId())
+            .created(timeAgoUtil.calculateTimeAgo(comment.getCreatedAt()))
+            .user(userClient.getUserIfExist(comment.getUserId()).getBody()) // Assuming a method to get user details
+            .replies(replies) // Use the initialized list to avoid null
+            .build();
+}
 
     public CommentResponse addReply(CommentRequest request, String header) {
         try {
@@ -129,7 +163,8 @@ public class CommentService {
                         .status(HttpStatus.OK.value())
                         .message("success")
                         .description("successfully added the comment")
-                        .commentRequest(getNewComment(comment1,user))
+//                        .commentRequest(getNewComment(comment1,user))
+                        .commentRequest(getCommentsByPostId(postOptional.get().getId()))
                         .timestamp(LocalDateTime.now())
                         .build();
             }

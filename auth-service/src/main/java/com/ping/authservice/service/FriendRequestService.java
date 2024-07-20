@@ -2,12 +2,15 @@ package com.ping.authservice.service;
 
 import com.google.api.Http;
 import com.ping.authservice.GlobalExceptionHandler.Exceptions.UsernameNotFoundException;
+import com.ping.authservice.kafka.producer.KafkaMessagePublisher;
 import com.ping.authservice.model.FriendRequest;
 import com.ping.authservice.model.Status;
 import com.ping.authservice.model.User;
 import com.ping.authservice.repository.FriendRequestRepository;
 import com.ping.authservice.repository.UserRepository;
 import com.ping.authservice.util.BasicResponse;
+import com.ping.common.dto.Notification;
+import com.ping.common.dto.TypeOfNotification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -29,6 +32,9 @@ public class FriendRequestService {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private KafkaMessagePublisher kafkaMessagePublisher;
+
     public BasicResponse sendFollowRequest(Integer followerId, Integer followingId) {
         try{
             User sender = userRepository.findById(followerId).orElseThrow(() -> new UsernameNotFoundException("user not found"));
@@ -39,7 +45,17 @@ public class FriendRequestService {
                     .status(Status.PENDING)
                     .createdAt(LocalDateTime.now())
                     .build();
-            friendRequestRepository.save(friendRequest);
+            FriendRequest savedRequest  = friendRequestRepository.save(friendRequest);
+            System.out.println("savedRequest: "+savedRequest);
+
+            kafkaMessagePublisher.sendNotification("notification", Notification.builder()
+                    .sender(followerId)
+                    .receiver(followingId)
+                    .typeOfNotification(TypeOfNotification.FRIEND_REQUEST)
+                    .createdAt(LocalDateTime.now())
+                    .requestId(savedRequest.getId())
+                    .build());
+
             return BasicResponse.builder()
                     .status(HttpStatus.OK.value())
                     .message("success")
@@ -59,6 +75,14 @@ public class FriendRequestService {
             request.setStatus(Status.ACCEPTED);
             friendRequestRepository.save(request);
             followService.follow(request.getSender().getId(),request.getReceiver().getId());
+
+            kafkaMessagePublisher.sendNotification("notification", Notification.builder()
+                    .sender(request.getSender().getId())
+                    .receiver(request.getReceiver().getId())
+                    .typeOfNotification(TypeOfNotification.FRIEND_REQUEST_ACCEPTED)
+                    .createdAt(LocalDateTime.now())
+                    .build());
+
             return BasicResponse.builder()
                     .status(HttpStatus.OK.value())
                     .message("success")
@@ -86,5 +110,9 @@ public class FriendRequestService {
         } catch (Exception e){
             throw new RuntimeException(e.getMessage());
         }
+    }
+
+    public void rejectFollowRequest(Integer requestId) {
+        friendRequestRepository.deleteById(requestId);
     }
 }

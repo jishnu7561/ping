@@ -1,6 +1,9 @@
 package com.ping.postservice.service;
 
+import com.ping.common.dto.Notification;
+import com.ping.common.dto.TypeOfNotification;
 import com.ping.postservice.GlobalException.Exceptions.UserNotFoundException;
+import com.ping.postservice.kafka.KafkaMessagePublisher;
 import com.ping.postservice.model.Like;
 import com.ping.postservice.model.Post;
 import com.ping.postservice.repository.LikeRepository;
@@ -25,6 +28,9 @@ public class LikeService {
     @Autowired
     private SavePostRepository savePostRepository;
 
+    @Autowired
+    private KafkaMessagePublisher kafkaMessagePublisher;
+
 
     public void likePost(Integer postId, Integer userId) {
         try {
@@ -34,7 +40,16 @@ public class LikeService {
                 like.setUserId(userId);
                 like.setPost(postOptional.get());
                 like.setCreatedAt(LocalDateTime.now());
-                likeRepository.save(like);
+                Like like1 = likeRepository.save(like);
+
+                kafkaMessagePublisher.sendNotification("notification", Notification.builder()
+                        .sender(userId)
+                        .receiver(postOptional.get().getUserId())
+                        .typeOfNotification(TypeOfNotification.LIKE)
+                        .createdAt(LocalDateTime.now())
+                        .postId(postOptional.get().getId())
+                        .build());
+
                 System.out.println("like saved");
             } else{
                 System.out.println("post not fount");

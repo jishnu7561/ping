@@ -16,19 +16,18 @@ public class FriendRequestController {
     private FriendRequestService friendRequestService;
 
 
-    @PostMapping("/approveFollowRequest")
-    public ResponseEntity<String> approveFollowRequest(@RequestParam Integer requestId) {
+    @PostMapping("/approveFollowRequest/{requestId}")
+    public ResponseEntity<String> approveFollowRequest(@PathVariable Integer requestId) {
 //        Integer requestId = requestBody.get("requestId");
         friendRequestService.approveFollowRequest(requestId);
         return ResponseEntity.ok("Follow request approved");
     }
 
-//    @PostMapping("/rejectFollowRequest")
-//    public ResponseEntity<String> rejectFollowRequest(@RequestBody Map<String, Integer> requestBody) {
-//        Integer requestId = requestBody.get("requestId");
-//        followService.rejectFollowRequest(requestId);
-//        return ResponseEntity.ok("Follow request rejected");
-//    }
+    @DeleteMapping("/rejectFollowRequest/{requestId}")
+    public ResponseEntity<String> rejectFollowRequest(@PathVariable Integer requestId) {
+        friendRequestService.rejectFollowRequest(requestId);
+        return ResponseEntity.ok("Follow request rejected");
+    }
 
     @GetMapping("/followRequestStatus/{id}")
     public ResponseEntity<String> followRequestStatus (@RequestHeader("Authorization") String header,

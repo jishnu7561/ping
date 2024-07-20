@@ -1,5 +1,6 @@
 package com.ping.postservice.service;
 
+import com.ping.postservice.GlobalException.Exceptions.ResourceNotFoundException;
 import com.ping.postservice.GlobalException.Exceptions.UserNotFoundException;
 import com.ping.postservice.dto.BasicResponse;
 import com.ping.postservice.dto.PostResponse;
@@ -8,11 +9,15 @@ import com.ping.postservice.feign.UserClient;
 import com.ping.postservice.model.Image;
 import com.ping.postservice.model.Post;
 import com.ping.postservice.repository.PostRepository;
+import com.ping.postservice.repository.ReportPostRepository;
 import com.ping.postservice.service.firebase.ImageService;
+import com.ping.postservice.util.EmailUtil;
 import com.ping.postservice.util.TimeAgoUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.mail.MailException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
@@ -41,6 +46,12 @@ public class PostService {
 
     @Autowired
     private SavePostService savePostService;
+
+    @Autowired
+    private EmailUtil emailUtil;
+
+    @Autowired
+    private ReportPostRepository reportPostRepository;
 
     public BasicResponse uploadPost(MultipartFile[] images, String caption, String tag, User user) {
 
@@ -250,5 +261,44 @@ public class PostService {
         catch (Exception e){
             throw new RuntimeException(e.getMessage());
         }
+    }
+
+    @Transactional
+    public BasicResponse deletePost(Integer postId, String reason,Integer reportId) {
+        try {
+            Post post = postRepository.findById(postId).orElseThrow(()-> new ResourceNotFoundException("post not found"));
+            User user = userClient.getUserIfExist(post.getUserId()).getBody();
+//            return new SendOtpResponse(true, "success");
+            postRepository.deleteById(postId);
+            reportPostRepository.deleteById(reportId);
+            emailUtil.sendPostDeletedEmail(user.getEmail(),reason);
+            return BasicResponse.builder()
+                    .status( HttpStatus.OK.value())
+                    .message("Success")
+                    .description("Email send successfully")
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+        }catch (ResourceNotFoundException ex) {
+            throw new ResourceNotFoundException(ex.getMessage());
+        } catch (UserNotFoundException ex) {
+            throw new UserNotFoundException(ex.getMessage());
+        } catch (MailException e) {
+            return BasicResponse.builder()
+                    .status( HttpStatus.CONFLICT.value())
+                    .message(e.getMessage())
+                    .description("Some Error occurred while sending OTP")
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+        } catch (Exception e) {
+            return BasicResponse.builder()
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                    .message(e.getMessage())
+                    .description("server side error")
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }
+
     }
 }

@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.cglib.core.Local;
 
 import java.time.LocalDateTime;
 
@@ -26,15 +25,18 @@ public class Notification {
     @Column(name = "receiver_id")
     private Integer receiver;
 
-    private TypeOfNotification typeOfNotification;
+    private NotificationType typeOfNotification;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "request_id")
+    private Integer requestId;
+
     @Column(name = "post_id")
-    private Long postId;
+    private Integer postId;
     @Column(name = "comment_id")
-    private Long commentId;
+    private Integer commentId;
     @Column(name = "is_read")
-    private Boolean isRead;
+    private Boolean isRead = false;
 }

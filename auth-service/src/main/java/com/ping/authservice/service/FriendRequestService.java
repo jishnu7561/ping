@@ -1,6 +1,4 @@
 package com.ping.authservice.service;
-
-import com.google.api.Http;
 import com.ping.authservice.GlobalExceptionHandler.Exceptions.UsernameNotFoundException;
 import com.ping.authservice.kafka.producer.KafkaMessagePublisher;
 import com.ping.authservice.model.FriendRequest;
@@ -9,8 +7,8 @@ import com.ping.authservice.model.User;
 import com.ping.authservice.repository.FriendRequestRepository;
 import com.ping.authservice.repository.UserRepository;
 import com.ping.authservice.util.BasicResponse;
-import com.ping.common.dto.Notification;
-import com.ping.common.dto.TypeOfNotification;
+import com.ping.authservice.kafka.event.Notification;
+import com.ping.authservice.kafka.event.TypeOfNotification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

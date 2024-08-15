@@ -1,5 +1,6 @@
 package com.ping.chat_service.dto;
 
+import com.ping.chat_service.kafka.event.TypeOfNotification;
 import com.ping.chat_service.model.NotificationType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,7 +18,7 @@ public class NotificationResponse {
     private String profileImage;
     private String createdAt;
     private Integer requestId;
-    private NotificationType type;
+    private TypeOfNotification type;
     private String postImage;
     private Integer notificationId;
     private Integer postId;

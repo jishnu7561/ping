@@ -6,16 +6,16 @@ import com.ping.authservice.dto.ProfileResponse;
 import com.ping.authservice.model.Otp;
 import com.ping.authservice.model.User;
 import com.ping.authservice.repository.FollowRepository;
+import com.ping.authservice.repository.OtpRepository;
 import com.ping.authservice.repository.UserRepository;
 import com.ping.authservice.util.BasicResponse;
 import com.ping.authservice.util.EmailUtil;
 import com.ping.authservice.util.OtpUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
-import org.springframework.mail.MailException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -41,6 +41,14 @@ public class UserService implements UserDetailsService {
     @Autowired
     private FollowRepository followRepository;
 
+
+    private PasswordEncoder passwordEncoder;
+    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @Autowired
+    private OtpRepository otpRepository;
 
 
     @Override
@@ -208,5 +216,92 @@ public class UserService implements UserDetailsService {
             return userRepository.findAll();
         }
         return userRepository.findByAccountNameContainingIgnoreCase(search);
+    }
+
+    public BasicResponse sendLinkToEmail(String email) {
+        try{
+            User user = userRepository.findByEmail(email).orElseThrow(()-> new UsernameNotFoundException("user not found"));
+            String otp = otpUtil.generateOtp();
+            String resetUrl = "http://localhost:3000/reset-password/" + otp;
+            emailUtil.sendPasswordResetEmail(user.getEmail(), resetUrl);
+            Otp otpDetails = otpRepository.findByEmail(user.getEmail());
+            if(otpDetails == null) {
+                var newOtp = Otp.builder()
+                        .otpGenerated(otp)
+                        .email(user.getEmail())
+                        .otpGeneratedAt(LocalDateTime.now())
+                        .build();
+                otpRepository.save(newOtp);
+            } else {
+                otpDetails.setOtpGenerated(otp);
+                otpDetails.setOtpGeneratedAt(LocalDateTime.now());
+                otpRepository.save(otpDetails);
+            }
+
+            return BasicResponse.builder()
+                    .status(HttpStatus.OK.value())
+                    .message("successfully send")
+                    .description("resetLink send to email")
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+        } catch (UsernameNotFoundException e) {
+            throw new UsernameNotFoundException(e.getMessage());
+        } catch (Exception e){
+            throw new RuntimeException("Internal server error");
+        }
+    }
+
+    public BasicResponse verifyToken(String token) {
+        try{
+            Otp otp = otpRepository.findByOtpGenerated(token);
+            if(otp == null || otpExpired(otp)) {
+                return BasicResponse.builder()
+                        .status(HttpStatus.OK.value())
+                        .message("Invalid or expired token")
+                        .timestamp(LocalDateTime.now())
+                        .build();
+            }
+           return BasicResponse.builder()
+                   .status(HttpStatus.OK.value())
+                   .message("Token is valid")
+                   .timestamp(LocalDateTime.now())
+                   .build();
+
+        } catch (Exception e){
+            throw new RuntimeException("Internal server error");
+        }
+    }
+
+    private boolean otpExpired(Otp otp) {
+       return otp.getOtpGeneratedAt().plusMinutes(30).isBefore(LocalDateTime.now());
+    }
+
+    public BasicResponse resetPassword(String password, String token) {
+        try{
+            Otp otp = otpRepository.findByOtpGenerated(token);
+            if(otp != null) {
+                User user = userRepository.findByEmail(otp.getEmail())
+                        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+                user.setPassword(passwordEncoder.encode(password));
+                userRepository.save(user);
+                return BasicResponse.builder()
+                        .status(HttpStatus.OK.value())
+                        .message("success")
+                        .timestamp(LocalDateTime.now())
+                        .build();
+            }
+            return BasicResponse.builder()
+                    .status(HttpStatus.OK.value())
+                    .message("failed to reset password")
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+        } catch (UsernameNotFoundException e) {
+            throw new UsernameNotFoundException(e.getMessage());
+        } catch (Exception e){
+            throw new RuntimeException("Internal server error");
+        }
     }
 }

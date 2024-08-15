@@ -72,6 +72,8 @@ public class AuthService {
             }
 
             String jwtToken = jwtService.generateToken(authRequest.getEmail());
+            user.setLastLoginAt(LocalDateTime.now());
+            userRepository.save(user);
             return AuthResponse.builder()
                     .user(user)
                     .jwtToken(jwtToken)

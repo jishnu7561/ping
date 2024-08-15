@@ -15,6 +15,6 @@ public class MessageResponse {
     private Integer sender;
     private Integer receiver;
     private String content;
-    private LocalDateTime createdAt;
+    private String createdAt;
     private Boolean isRead;
 }

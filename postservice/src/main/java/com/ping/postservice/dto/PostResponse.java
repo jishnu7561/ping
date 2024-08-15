@@ -33,5 +33,6 @@ public class PostResponse {
     private boolean isLiked;
     private Integer likeCount;
     private boolean isSaved;
+    private String postImage;
 
 }

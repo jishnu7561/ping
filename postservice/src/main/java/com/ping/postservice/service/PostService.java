@@ -3,6 +3,7 @@ package com.ping.postservice.service;
 import com.ping.postservice.GlobalException.Exceptions.ResourceNotFoundException;
 import com.ping.postservice.GlobalException.Exceptions.UserNotFoundException;
 import com.ping.postservice.dto.BasicResponse;
+import com.ping.postservice.dto.PostDto;
 import com.ping.postservice.dto.PostResponse;
 import com.ping.postservice.dto.User;
 import com.ping.postservice.feign.UserClient;
@@ -14,6 +15,10 @@ import com.ping.postservice.service.firebase.ImageService;
 import com.ping.postservice.util.EmailUtil;
 import com.ping.postservice.util.TimeAgoUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.MailException;
 import org.springframework.stereotype.Service;
@@ -21,10 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class PostService {
@@ -124,6 +127,7 @@ public class PostService {
             }
 
         }
+        Collections.reverse(postResponses);
         return postResponses;
     }
 
@@ -131,26 +135,26 @@ public class PostService {
         return postRepository.countByUserId(userId);
     }
 
-    public List<PostResponse> getUserPosts(Integer userId) {
+    public Page<PostResponse> getUserPosts(Integer userId,Pageable pageable) {
         try {
 //            User user = userClient.getUser(header).getBody();
             User user = userClient.getUserIfExist(userId).getBody();
             if (user != null) {
-                return findListOfPosts(user);
+                return findListOfPosts(user,pageable);
             }
         } catch (UserNotFoundException e) {
             throw e;
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
-        return null;
+        return Page.empty();
     }
 
-    private List<PostResponse> findListOfPosts(User user) {
-        List<Post> postList = postRepository.findAllByUserId(user.getId());
+    private Page<PostResponse> findListOfPosts(User user,Pageable pageable) {
+        Page<Post> postPage = postRepository.findAllByUserId(user.getId(),pageable);
         List<PostResponse> postResponses = new ArrayList<>();
-        if(!postList.isEmpty()) {
-            for (Post post : postList) {
+        if(!postPage.isEmpty()) {
+            for (Post post : postPage) {
 
                 postResponses.add(
                         PostResponse.builder()
@@ -171,7 +175,7 @@ public class PostService {
 
             }
         }
-        return postResponses;
+        return new PageImpl<>(postResponses, pageable, postPage.getTotalElements());
     }
 
     private List<String> getPostImages(Post post) {
@@ -300,5 +304,67 @@ public class PostService {
                     .build();
         }
 
+    }
+
+    public PostResponse getPost(Integer id) {
+        try{
+            Post post = postRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("post not found"));
+            PostResponse postResponse = PostResponse.builder()
+                    .postImage(post.getImages().get(0).getImageUrl())
+                    .postId(post.getId())
+                    .userId(post.getUserId())
+                    .build();
+            return postResponse;
+        } catch (ResourceNotFoundException e){
+            throw new ResourceNotFoundException(e.getMessage());
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Internal server error");
+        }
+    }
+
+    public Page<PostDto> getAllPostsBasedOnSearch(String search, String filter, int page, int size) {
+        try{
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Post> posts;
+            LocalDateTime startDate = LocalDateTime.now().minusDays(7);
+
+            if (Objects.equals(search, "") && Objects.equals(filter, "")) {
+                System.out.println("search1: "+search+" , "+"filter1: "+filter);
+                posts = postRepository.findAll(pageable);
+            }
+            else if (!search.isEmpty() && filter.equals("content")) {
+                System.out.println("search2: "+search+" , "+"filter2: "+filter);
+                posts = postRepository.findByCaptionContainingIgnoreCase(search, pageable);
+            }
+            else if (!search.isEmpty() && filter.equals("tag")) {
+                System.out.println("search3: "+search+" , "+"filter3: "+filter);
+                posts = postRepository.findByTagContainingIgnoreCase(search, pageable);
+            }
+            else if (!search.isEmpty() && filter.equals("recent")) {
+                System.out.println("search4: "+search+" , "+"filter4: "+filter);
+                posts = postRepository.findRecentPostsByCaptionOrTag(startDate,search, pageable);
+            }
+            else if (search.isEmpty() && filter.equals("content")) {
+                System.out.println("search5: "+search+" , "+"filter5: "+filter);
+                posts = postRepository.findByCaptionContainingIgnoreCase(search, pageable);
+            }
+            else if (search.isEmpty() && filter.equals("tag")) {
+                System.out.println("search6: "+search+" , "+"filter6: "+filter);
+                posts = postRepository.findByTagContainingIgnoreCase(search, pageable);
+            } else if (search.isEmpty() && filter.equals("recent")) {
+                posts = postRepository.findRecentPosts(startDate, pageable);
+            } else {
+                posts = postRepository.findByCaptionContainingIgnoreCase(search, pageable);
+            }
+            List<PostDto> postDtos = posts.getContent().stream().map(post -> {
+                // Fetch user details using userService
+                User user = userClient.getUserIfExist(post.getUserId()).getBody();
+                return new PostDto(post, user.getImageUrl(), user.getAccountName(),post.getLikes().size());
+            }).collect(Collectors.toList());
+
+            return new PageImpl<>(postDtos, pageable, posts.getTotalElements());
+        } catch (Exception e){
+            throw new RuntimeException("Internal server issue");
+        }
     }
 }

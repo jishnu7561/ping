@@ -9,6 +9,7 @@ import com.ping.postservice.model.Post;
 import com.ping.postservice.model.ReportPost;
 import com.ping.postservice.repository.PostRepository;
 import com.ping.postservice.repository.ReportPostRepository;
+import com.ping.postservice.util.TimeAgoUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,9 @@ public class ReportPostService {
 
     @Autowired
     private UserClient userClient;
+
+    @Autowired
+    private TimeAgoUtil timeAgoUtil;
 
 
     @Transactional
@@ -58,6 +62,7 @@ public class ReportPostService {
         List<ReportPostResponse> reportPostResponseList = new ArrayList<>();
         try {
             for (ReportPost reportPost : reportPostList) {
+
                 ReportPostResponse response = ReportPostResponse.builder()
                         .reportId(reportPost.getId())
                         .reporterId(reportPost.getReporterId())
@@ -66,6 +71,7 @@ public class ReportPostService {
                         .postUserName(userClient.getUserIfExist(reportPost.getPost().getUserId()).getBody().getAccountName())
                         .reporterName(userClient.getUserIfExist(reportPost.getReporterId()).getBody().getAccountName())
                         .reportDescription(reportPost.getReportDescription())
+                        .createdAt(timeAgoUtil.changeTimeFormat(reportPost.getReportedAt()))
                         .build();
 
                 reportPostResponseList.add(response);

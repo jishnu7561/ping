@@ -1,6 +1,7 @@
 package com.ping.postservice.kafka.config;
 
 
+import com.ping.postservice.kafka.event.Notification;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -32,12 +33,12 @@ public class KafkaProducerConfig {
     }
 
     @Bean
-    public ProducerFactory<String,Object> producerFactory() {
+    public ProducerFactory<String, Notification> producerFactory() {
         return new DefaultKafkaProducerFactory<>(producerConfig());
     }
 
     @Bean
-    public KafkaTemplate<String ,Object> kafkaTemplate() {
+    public KafkaTemplate<String ,Notification> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
 

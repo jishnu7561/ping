@@ -12,4 +12,6 @@ public interface OtpRepository extends JpaRepository<Otp,Integer> {
 //    Optional<Otp> findByEmail(String email);
 
     Otp findByEmail(String  email);
+
+    Otp findByOtpGenerated(String token);
 }

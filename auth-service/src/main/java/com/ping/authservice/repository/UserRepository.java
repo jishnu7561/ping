@@ -26,28 +26,9 @@ public interface UserRepository extends JpaRepository<User,Integer> {
     List<User> findByAccountNameContainingIgnoreCase(String userName);
 
 
-//    @Query("SELECT DATE_FORMAT(u.createdAt, '%Y-%m-%d') as date, COUNT(u) as count " +
-//            "FROM User u " +
-//            "WHERE u.createdAt >= :startDate " +
-//            "GROUP BY DATE_FORMAT(u.createdAt, '%Y-%m-%d') " +
-//            "ORDER BY date")
-//    List<Object[]> countUsersByDay(@Param("startDate") LocalDateTime startDate);
-//
-//    @Query("SELECT DATE_FORMAT(u.createdAt, '%Y-%m') as date, COUNT(u) as count " +
-//            "FROM User u " +
-//            "WHERE u.createdAt >= :startDate " +
-//            "GROUP BY DATE_FORMAT(u.createdAt, '%Y-%m') " +
-//            "ORDER BY date")
-//    List<Object[]> countUsersByMonth(@Param("startDate") LocalDateTime startDate);
-//
-//    @Query("SELECT DATE_FORMAT(u.createdAt, '%Y') as date, COUNT(u) as count " +
-//            "FROM User u " +
-//            "WHERE u.createdAt >= :startDate " +
-//            "GROUP BY DATE_FORMAT(u.createdAt, '%Y') " +
-//            "ORDER BY date")
-//    List<Object[]> countUsersByYear(@Param("startDate") LocalDateTime startDate);
-
     List<User> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    List<User> findByLastLoginAtBetween(LocalDateTime startDateTime, LocalDateTime endDateTime);
 
     Long countByIsBlocked(boolean b);
 

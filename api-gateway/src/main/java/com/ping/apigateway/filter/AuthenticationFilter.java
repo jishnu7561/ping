@@ -56,14 +56,20 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
 
                     String userName = getUserIdFromToken(authHeader);
-//                    String userServiceUrl = "http://localhost:8083/user/api/auth/status/"+userName;
-//                    String status = restTemplate.getForObject(userServiceUrl, String.class);
-//                    String userSubscribeUrl = "http://localhost:8083/user/api/auth/isSubscribed/"+userName;
-//                    String isSubscribed = restTemplate.getForObject(userSubscribeUrl, String.class);
+                    String userServiceUrl = "http://localhost:8083/user/api/auth/status/"+userName;
+                    log.info("Checking user status at URL: " + userServiceUrl);
+                    String status = restTemplate.getForObject(userServiceUrl, String.class);
+                    log.info("User status: " + status);
 
-//                    if ("BLOCKED".equalsIgnoreCase(status)) {
-//                        throw new UserBlockedException("account is blocked");
-//                    }
+
+//                    String userSubscribeUrl = "http://localhost:8083/user/api/auth/isSubscribed/"+userName;
+//                    log.info("Checking user subscription at URL: " + userSubscribeUrl);
+//                    String isSubscribed = restTemplate.getForObject(userSubscribeUrl, String.class);
+//                    log.info("User subscription status: " + isSubscribed);
+
+                    if ("BLOCKED".equalsIgnoreCase(status)) {
+                        throw new UserBlockedException("account is blocked");
+                    }
                 }
                 catch ( ExpiredJwtException e ){
                     throw new TokenInvalidException("Token Expired, please login again");

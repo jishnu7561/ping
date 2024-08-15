@@ -14,5 +14,6 @@ public class ReportPostResponse {
     private String reporterName;
     private String postUserName;
     private String reportDescription;
+    private String createdAt;
 }
 

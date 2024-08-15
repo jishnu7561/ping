@@ -1,14 +1,15 @@
 package com.ping.postservice.controller;
 
 import com.ping.postservice.GlobalException.Exceptions.UserNotFoundException;
-import com.ping.postservice.dto.BasicResponse;
-import com.ping.postservice.dto.PostResponse;
-import com.ping.postservice.dto.UploadRequest;
-import com.ping.postservice.dto.User;
+import com.ping.postservice.dto.*;
 import com.ping.postservice.feign.UserClient;
+import com.ping.postservice.model.Post;
 import com.ping.postservice.repository.PostRepository;
 import com.ping.postservice.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -91,8 +92,11 @@ public class PostController {
     }
 
     @GetMapping("/getUserPosts/{userId}")
-    public ResponseEntity<List<PostResponse>> getUserPosts (@PathVariable("userId") Integer userId) {
-        List<PostResponse> postResponseList = postService.getUserPosts(userId);
+    public ResponseEntity<Page<PostResponse>> getUserPosts (@PathVariable("userId") Integer userId,
+                                                            @RequestParam(defaultValue = "0") int page,
+                                                            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<PostResponse> postResponseList = postService.getUserPosts(userId,pageable);
         return ResponseEntity.ok(postResponseList);
     }
 
@@ -132,5 +136,22 @@ public class PostController {
                                                     @RequestParam Integer reportId) {
         System.out.println("reportId: "+ reportId +"  "+"postId: "+ postId +"  ");
         return ResponseEntity.ok(postService.deletePost(postId,reason,reportId));
+    }
+
+    @GetMapping("/post-details/{id}")
+    public ResponseEntity<PostResponse> getPost(@PathVariable Integer id){
+        return ResponseEntity.ok(postService.getPost(id));
+    }
+
+    @GetMapping("/all-posts")
+    public ResponseEntity<Page<PostDto>> getAllPost(@RequestParam(defaultValue = "") String search,
+                                                    @RequestParam(defaultValue = "") String filter,
+                                                    @RequestParam(defaultValue = "0") int page,
+                                                    @RequestParam(defaultValue = "10") int size) {
+        System.out.println("search ==== "+search);
+        System.out.println("filter ==== "+filter);
+        System.out.println("page ==== "+page);
+        System.out.println("size ==== "+size);
+        return ResponseEntity.ok(postService.getAllPostsBasedOnSearch(search,filter,page,size));
     }
 }

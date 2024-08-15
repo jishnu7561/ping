@@ -1,7 +1,8 @@
 package com.ping.postservice.kafka;
 
-import com.ping.common.dto.Customer;
-import com.ping.common.dto.Notification;
+//import com.ping.common.dto.Customer;
+
+import com.ping.postservice.kafka.event.Notification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
@@ -13,26 +14,26 @@ import java.util.concurrent.CompletableFuture;
 public class KafkaMessagePublisher {
 
     @Autowired
-    private KafkaTemplate<String,Object> template;
+    private KafkaTemplate<String, Notification> template;
 
-    public void sendMessage(String topic , String  message) {
-        CompletableFuture<SendResult<String, Object>> future = template.send(topic, message);
-        future.whenComplete((result,ex)-> {
-            if (ex == null) {
-                System.out.println("Send message=[" + message +
-                        "] with offset=[" + result.getRecordMetadata().offset() + "]");
-
-            } else {
-                System.out.println("Unable to send message=[" + message +
-                        "] due to : " + ex.getMessage());
-
-            }
-        });
-    }
+//    public void sendMessage(String topic , String  message) {
+//        CompletableFuture<SendResult<String, Object>> future = template.send(topic, message);
+//        future.whenComplete((result,ex)-> {
+//            if (ex == null) {
+//                System.out.println("Send message=[" + message +
+//                        "] with offset=[" + result.getRecordMetadata().offset() + "]");
+//
+//            } else {
+//                System.out.println("Unable to send message=[" + message +
+//                        "] due to : " + ex.getMessage());
+//
+//            }
+//        });
+//    }
 
     public void sendNotification(String topic , Notification notification) {
         try {
-            CompletableFuture<SendResult<String, Object>> future = template.send(topic, notification);
+            CompletableFuture<SendResult<String, Notification>> future = template.send(topic, notification);
             future.whenComplete((result, ex) -> {
                 if (ex == null) {
                     System.out.println("Send message=[" + notification.toString() +

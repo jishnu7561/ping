@@ -1,9 +1,11 @@
 package com.ping.postservice.service;
 
-import com.ping.common.dto.Notification;
-import com.ping.common.dto.TypeOfNotification;
+//import com.ping.common.dto.Notification;
+//import com.ping.common.dto.TypeOfNotification;
 import com.ping.postservice.GlobalException.Exceptions.UserNotFoundException;
 import com.ping.postservice.kafka.KafkaMessagePublisher;
+import com.ping.postservice.kafka.event.Notification;
+import com.ping.postservice.kafka.event.TypeOfNotification;
 import com.ping.postservice.model.Like;
 import com.ping.postservice.model.Post;
 import com.ping.postservice.repository.LikeRepository;

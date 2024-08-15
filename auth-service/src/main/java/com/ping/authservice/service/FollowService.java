@@ -1,17 +1,17 @@
 package com.ping.authservice.service;
 
 import com.ping.authservice.kafka.producer.KafkaMessagePublisher;
+
 import com.ping.authservice.model.Follow;
-import com.ping.authservice.model.User;
 import com.ping.authservice.repository.FollowRepository;
-import com.ping.common.dto.Notification;
-import com.ping.common.dto.TypeOfNotification;
+import com.ping.authservice.kafka.event.Notification;
+import com.ping.authservice.kafka.event.TypeOfNotification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 public class FollowService {

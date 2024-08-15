@@ -1,5 +1,6 @@
 package com.ping.chat_service.model;
 
+import com.ping.chat_service.kafka.event.TypeOfNotification;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,7 +26,7 @@ public class Notification {
     @Column(name = "receiver_id")
     private Integer receiver;
 
-    private NotificationType typeOfNotification;
+    private TypeOfNotification typeOfNotification;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

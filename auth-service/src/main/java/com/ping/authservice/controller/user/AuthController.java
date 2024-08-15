@@ -124,6 +124,23 @@ public class AuthController {
         return ResponseEntity.ok(userRepository.findByAccountNameContainingIgnoreCase(userName));
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<BasicResponse> sendLinkToEmail(@RequestParam String email){
+        return ResponseEntity.ok(userService.sendLinkToEmail(email));
+    }
+
+    @GetMapping("/verify-token/{token}")
+    public ResponseEntity<BasicResponse> verifyToken(@PathVariable String token) {
+        return ResponseEntity.ok(userService.verifyToken(token));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<BasicResponse> resetPassword(@RequestParam String password,
+                                                       @RequestParam String token) {
+        return  ResponseEntity.ok(userService.resetPassword(password,token));
+    }
+
+
 }
 
 class GoogleAuthRequest {

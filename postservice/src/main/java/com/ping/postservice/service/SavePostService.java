@@ -12,6 +12,9 @@ import com.ping.postservice.repository.PostRepository;
 import com.ping.postservice.repository.SavePostRepository;
 import com.ping.postservice.util.TimeAgoUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -108,11 +111,11 @@ public class SavePostService {
     }
 
 
-    public List<PostResponse> getSavedPosts(String header) throws UserNotFoundException {
+    public Page<PostResponse> getSavedPosts(String header, Pageable pageable) throws UserNotFoundException {
         try {
             User user = userClient.getUser(header).getBody();
             if (user != null) {
-               return findListOfSavedPost(user);
+               return findListOfSavedPost(user,pageable);
             }
         } catch (UserNotFoundException e) {
             throw e;
@@ -122,7 +125,7 @@ public class SavePostService {
         return null;
     }
 
-    private List<PostResponse> findListOfSavedPost(User user) {
+    private Page<PostResponse> findListOfSavedPost(User user,Pageable pageable) {
         List<SavedPost> savedPosts = savePostRepository.findAllByUserId(user.getId());
         List<PostResponse> postResponses = new ArrayList<>();
         if(!savedPosts.isEmpty()) {
@@ -143,7 +146,8 @@ public class SavePostService {
                              .build());
             }
         }
-        return postResponses;
+//        return postResponses;
+        return new PageImpl<>(postResponses, pageable, postResponses.size());
     }
 
     private List<String> getPostImages(Post post) {

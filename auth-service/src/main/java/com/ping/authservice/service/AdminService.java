@@ -6,9 +6,10 @@ import com.ping.authservice.feign.PostFeign;
 import com.ping.authservice.model.User;
 import com.ping.authservice.repository.UserRepository;
 import com.ping.authservice.util.BasicResponse;
+import com.ping.authservice.util.EmailUtil;
+import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,6 +21,12 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.List;
+
+
 @Service
 public class AdminService {
 
@@ -29,6 +36,9 @@ public class AdminService {
     @Autowired
     private PostFeign postFeign;
 
+    @Autowired
+    private EmailUtil emailUtil;
+
     public List<User> getAllUsers() {
         List<User> listOfUsers = userRepository.findAll();
         return listOfUsers;
@@ -36,7 +46,7 @@ public class AdminService {
 
 
 
-    public BasicResponse manageBlockAndUnBlock(int userId) {
+    public BasicResponse manageBlockAndUnBlock(int userId,String reason) {
         try{
             checkForBlockedUsers();
             User user = userRepository.findById(userId).orElseThrow(()->new UsernameNotFoundException("user not found"));
@@ -46,6 +56,8 @@ public class AdminService {
                 user.setBlocked(true);
             }
             userRepository.save(user);
+            emailUtil.sendBlockUnblockEmail(user.getEmail(),user.isBlocked(),reason);
+
             return BasicResponse.builder()
                     .status( HttpStatus.OK.value())
                     .message("Success")
@@ -54,6 +66,8 @@ public class AdminService {
                     .build();
         } catch (UsernameNotFoundException e) {
             throw new UsernameNotFoundException(e.getMessage());
+        } catch (MessagingException e) {
+            throw new RuntimeException("Internal server error");
         }
     }
 
@@ -126,7 +140,8 @@ public class AdminService {
             throw new IllegalArgumentException("Invalid period");
         }
 
-        List<User> userList = userRepository.findByCreatedAtBetween(startDateTime, endDateTime);
+//        List<User> userList = userRepository.findByCreatedAtBetween(startDateTime, endDateTime);
+        List<User> userList = userRepository.findByLastLoginAtBetween(startDateTime, endDateTime);
 
 //        double totalSales = 0;
 //
@@ -175,5 +190,51 @@ public class AdminService {
 
     public List<ReportPostResponse> getAllPost() {
         return postFeign.getAllReports();
+    }
+
+//    public byte[] generatePdf(double totalRevenue, int totalSales) throws DocumentException, IOException {
+//        Context context = new Context();
+//        context.setVariable("totalRevenue", totalRevenue);
+//        context.setVariable("totalSales", totalSales);
+//
+////        String htmlContent = templateEngine.process("pdf", context);
+//
+//        ByteArrayOutputStream os = new ByteArrayOutputStream();
+//        ITextRenderer renderer = new ITextRenderer();
+//        String htmlContent = "<!DOCTYPE html>" +
+//                "<html lang=\"en\">" +
+//                "<head>" +
+//                "<meta charset=\"UTF-8\"/>" +
+//                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>" +
+//                "<title>Document</title>" +
+//
+//                "</head>" +
+//                "<body>" +
+//                "<h1>Hello, World!</h1>" +
+//                "</body>" +
+//                "</html>";
+//        renderer.setDocumentFromString(htmlContent);
+//        renderer.layout();
+//        renderer.createPDF(os);
+//        os.close();
+//
+//        return os.toByteArray();
+//    }
+
+    public BasicResponse sendReportResponse(Integer reporterId, String response,String userName) {
+        try{
+            User user = userRepository.findById(reporterId).orElseThrow(()-> new UsernameNotFoundException("user not found"));
+            emailUtil.sendReportResponseEmail("jishnujish0838@gmail.com",response,userName);
+            return BasicResponse.builder()
+                    .status(HttpStatus.OK.value())
+                    .message("response send successfully")
+                    .description("Response to the reporter user send to the email successfully.")
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }catch (UsernameNotFoundException e) {
+            throw new UsernameNotFoundException(e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException("Internal server error");
+        }
     }
 }

@@ -9,6 +9,7 @@ import com.ping.chat_service.model.Message;
 import com.ping.chat_service.repository.ChatRepository;
 import com.ping.chat_service.repository.MessageRepository;
 import com.ping.chat_service.util.BasicResponse;
+import com.ping.chat_service.util.TimeAgoUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -31,6 +32,9 @@ public class ChatService {
 
     @Autowired
     private ChatRepository chatRepository;
+
+    @Autowired
+    private TimeAgoUtil timeAgoUtil;
 
     @Autowired
     private MessageRepository messageRepository;
@@ -103,7 +107,7 @@ public class ChatService {
 
 
     @Transactional
-    public Message sendMessage(MessageRequest messageRequest) {
+    public MessageResponse sendMessage(MessageRequest messageRequest) {
         try {
 //            User user = userClient.getUser(header).getBody();
 //            if(user == null) {
@@ -126,8 +130,17 @@ public class ChatService {
             chat.setLastMessageDate(LocalDateTime.now());
             chatRepository.save(chat);
 
+            MessageResponse messageResponse = MessageResponse.builder()
+                    .id(savedMessage.getId())
+                    .sender(savedMessage.getSender())
+                    .receiver(savedMessage.getReceiver())
+                    .content(savedMessage.getContent())
+                    .createdAt(timeAgoUtil.formatDateTime(savedMessage.getCreatedAt()))
+                    .isRead(savedMessage.getIsRead())
+                    .build();
+
             System.out.println("saved message: "+savedMessage.getId());
-            return savedMessage;
+            return messageResponse;
 
         } catch (UserNotFoundException ex) {
             throw new UserNotFoundException(ex.getMessage());
@@ -306,7 +319,7 @@ public class ChatService {
                     .sender(message.getSender())
                     .receiver(message.getReceiver())
                     .content(message.getContent())
-                    .createdAt(message.getCreatedAt())
+                    .createdAt(timeAgoUtil.formatDateTime(message.getCreatedAt()))
                     .isRead(message.getIsRead())
                     .build());
         }
@@ -357,6 +370,7 @@ public class ChatService {
             throw new RuntimeException(e.getMessage());
         }
     }
+
 
 //    @Transactional
 //    public void markMessagesAsRead(Integer receiverId, Integer chatId) {

@@ -8,14 +8,15 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="api-gateway" />
-        <module name="auth-service" />
         <module name="post-service" />
         <module name="chat-service" />
+        <module name="auth-service" />
         <module name="common" />
         <module name="service-registry" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="ping-backend" target="1.5" />
       <module name="postservice" target="1.5" />
       <module name="shared" target="17" />
     </bytecodeTargetLevel>

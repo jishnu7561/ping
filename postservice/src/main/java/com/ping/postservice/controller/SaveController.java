@@ -5,6 +5,9 @@ import com.ping.postservice.dto.PostResponse;
 import com.ping.postservice.service.PostService;
 import com.ping.postservice.service.SavePostService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,9 +42,12 @@ public class SaveController {
     }
 
     @GetMapping("/getSavedPosts")
-    public ResponseEntity<List<PostResponse>> getSavedPosts (@RequestHeader("Authorization") String header) {
+    public ResponseEntity<Page<PostResponse>> getSavedPosts (@RequestHeader("Authorization") String header,
+                                                             @RequestParam(defaultValue = "0") int page,
+                                                             @RequestParam(defaultValue = "10") int size) {
         System.out.println("get post called ====");
-        List<PostResponse> savedPosts = savePostService.getSavedPosts(header);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<PostResponse> savedPosts = savePostService.getSavedPosts(header,pageable);
         return ResponseEntity.ok(savedPosts);
     }
 

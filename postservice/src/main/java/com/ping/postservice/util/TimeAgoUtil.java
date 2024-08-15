@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
 @Component
@@ -34,6 +35,12 @@ public class TimeAgoUtil {
         } else {
             return seconds + (seconds == 1 ? " second ago" : " seconds ago");
         }
+    }
+
+    public String changeTimeFormat(LocalDateTime reportedAt) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM d yyyy");
+        String formattedDate = reportedAt.format(formatter);
+        return "[" + formattedDate + "]";
     }
 }
 

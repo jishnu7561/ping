@@ -35,18 +35,15 @@ public class RealtimeChat {
     private NotificationService notificationService;
 
     @MessageMapping("/sendMessage")  //  /app/sendMessage
-    public Message receiveMessage(@Payload MessageRequest messageRequest) {
+    public MessageResponse receiveMessage(@Payload MessageRequest messageRequest) {
         System.out.println("header at chat websocket: "+messageRequest);
-        Message savedMessage = chatService.sendMessage(messageRequest);
+        MessageResponse savedMessage = chatService.sendMessage(messageRequest);
         List<ChattingUserResponse> responseList = chatService.getDefaultChattingUsers(messageRequest.getHeader());
         System.out.println("senMessage endpoint called successfully");
         simpMessagingTemplate.convertAndSend("/chat/"+messageRequest.getChatId(),savedMessage);
         simpMessagingTemplate.convertAndSend("/chatting-users",messageRequest);
 
-//        System.out.println("called the websocket ");  //   /chat/chatId
-//        return message;
         System.out.println("message : "+messageRequest.toString());
-//        simpMessagingTemplate.convertAndSendToUser("user","/private",messageRequest);
         return savedMessage;
     }
 
@@ -64,7 +61,7 @@ public class RealtimeChat {
     public Integer deleteMessage(@Payload MessageRequest messageRequest) {
         System.out.println("dlete message:"+messageRequest.getMessageId());
         chatService.deleteMessage(messageRequest.getMessageId());
-        simpMessagingTemplate.convertAndSend("/chat/message-deleted"+messageRequest.getChatId(),messageRequest.getMessageId());
+        simpMessagingTemplate.convertAndSend("/chat/message-deleted/"+messageRequest.getChatId(),messageRequest.getMessageId());
         return messageRequest.getMessageId();
     }
 
